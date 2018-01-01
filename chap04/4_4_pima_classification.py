@@ -2,11 +2,10 @@
 
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn import metrics
-import matplotlib.pyplot as plt
-
 
 # %% Load train dataset
 
@@ -45,13 +44,17 @@ F_quad = mu_pos.T.dot(cov_inv_pos).dot(mu_pos) - mu_neg.T.dot(cov_inv_neg).dot(m
     + np.log(np.linalg.det(cov_pos) / np.linalg.det(cov_neg))\
     - 2 * np.log(p_pos / p_neg)
 
+
 def f_quad(x):
-    return np.einsum('ij,ik,kj->j', x.T, S_quad, x.T) + 2 * c_quad.T.dot(x.T) + F_quad
+    return np.einsum('ij,ik,kj->j', x.T, S_quad, x.T)\
+        + 2 * c_quad.T.dot(x.T) + F_quad
+
 
 delta = 0.25
 gx, gy = np.meshgrid(np.arange(50, 200, delta), np.arange(15, 50, delta))
 vx = np.array([gx, gy])
-vz = np.einsum('ijk,il,ljk->jk', vx, S_quad, vx) + 2 * np.einsum('i,ijk->jk', c_quad, vx) + F_quad
+vz = np.einsum('ijk,il,ljk->jk', vx, S_quad, vx) + 2 * \
+    np.einsum('i,ijk->jk', c_quad, vx) + F_quad
 
 plt.figure(figsize=(6, 6))
 plt.scatter(pos[:, 0], pos[:, 1], marker='o')
@@ -64,6 +67,7 @@ plt.xlabel('glu')
 plt.ylabel('bmi')
 plt.title('Quadratic classification function')
 plt.show()
+plt.savefig('./chap04/4_4_pima_classification_quad.eps')
 
 # %% Linear classification function
 
@@ -75,14 +79,17 @@ c_linear = (mu_neg.T.dot(cov_inv_pool) - mu_pos.T.dot(cov_inv_pool)).T
 F_linear = mu_pos.T.dot(cov_inv_pool).dot(mu_pos) - mu_neg.T.dot(cov_inv_pool).dot(mu_neg)\
     - 2 * np.log(len(pos) / len(neg))
 
+
 def f_linear(x):
-    return np.einsum('ij,ik,kj->j', x.T, S_linear, x.T) + 2 * c_linear.T.dot(x.T) + F_linear
+    return np.einsum('ij,ik,kj->j', x.T, S_linear, x.T)\
+        + 2 * c_linear.T.dot(x.T) + F_linear
+
 
 delta = 0.25
 gx, gy = np.meshgrid(np.arange(50, 200, delta), np.arange(15, 50, delta))
 vx = np.array([gx, gy])
 vz = np.einsum('ijk,il,ljk->jk', vx, S_linear, vx)\
-        + 2 * np.einsum('i,ijk->jk', c_linear, vx) + F_linear
+    + 2 * np.einsum('i,ijk->jk', c_linear, vx) + F_linear
 
 plt.figure(figsize=(6, 6))
 plt.scatter(pos[:, 0], pos[:, 1], marker='o')
@@ -95,11 +102,14 @@ plt.xlabel('glu')
 plt.ylabel('bmi')
 plt.title('Linear classification function')
 plt.show()
+plt.savefig('./chap04/4_4_pima_classification_linear.eps')
 
 # %% LOC curves
 
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
+
 
 y_linear = sigmoid(-f_linear(data_test))
 fpr_linear, tpr_linear, _ = metrics.roc_curve(t_test, y_linear, pos_label=1)
@@ -111,8 +121,10 @@ roc_auc_quad = metrics.auc(fpr_quad, tpr_quad)
 
 plt.figure(figsize=(6, 6))
 plt.title('ROC')
-plt.plot(fpr_linear, tpr_linear, 'b', label='Linear AUC = %0.2f' % roc_auc_linear)
-plt.plot(fpr_quad, tpr_quad, 'b--', label='Quadratic AUC = %0.2f' % roc_auc_quad)
+plt.plot(fpr_linear, tpr_linear, 'b',
+         label='Linear AUC = %0.2f' % roc_auc_linear)
+plt.plot(fpr_quad, tpr_quad, 'b--',
+         label='Quadratic AUC = %0.2f' % roc_auc_quad)
 plt.legend(loc='lower right')
 plt.plot([0, 1], [0, 1], 'r--')
 plt.xlim([0.0, 1.0])
@@ -120,3 +132,4 @@ plt.ylim([0.0, 1.0])
 plt.ylabel('True Positive Rate')
 plt.xlabel('False Positive Rate')
 plt.show()
+plt.savefig('./chap04/4_4_pima_classification_loc.eps')
