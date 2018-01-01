@@ -66,8 +66,8 @@ plt.ylim(15, 50)
 plt.xlabel('glu')
 plt.ylabel('bmi')
 plt.title('Quadratic classification function')
-plt.show()
 plt.savefig('./chap04/4_4_pima_classification_quad.png')
+plt.show()
 
 # %% Linear classification function
 
@@ -101,8 +101,8 @@ plt.ylim(15, 50)
 plt.xlabel('glu')
 plt.ylabel('bmi')
 plt.title('Linear classification function')
-plt.show()
 plt.savefig('./chap04/4_4_pima_classification_linear.png')
+plt.show()
 
 # %% LOC curves
 
@@ -131,5 +131,5 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.0])
 plt.ylabel('True Positive Rate')
 plt.xlabel('False Positive Rate')
-plt.show()
 plt.savefig('./chap04/4_4_pima_classification_loc.png')
+plt.show()

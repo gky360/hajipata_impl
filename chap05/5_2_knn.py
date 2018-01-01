@@ -150,8 +150,8 @@ plt.xlabel('k')
 plt.ylabel('error')
 plt.title('ETL1 dataset')
 plt.legend()
-plt.show()
 plt.savefig('./chap05/5_2_knn_etl1.png')
+plt.show()
 
 # %% Plot Pima indian
 
@@ -163,5 +163,5 @@ plt.xlabel('k')
 plt.ylabel('error')
 plt.title('Pima indian dataset')
 plt.legend()
-plt.show()
 plt.savefig('./chap05/5_2_knn_pima.png')
+plt.show()
