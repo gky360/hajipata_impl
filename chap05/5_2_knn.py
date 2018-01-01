@@ -5,18 +5,20 @@ import os
 import struct
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import LeaveOneOut, cross_val_score, train_test_split
+from PIL import Image, ImageEnhance
+from sklearn.model_selection import (LeaveOneOut, cross_val_score,
+                                     train_test_split)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-from PIL import Image, ImageEnhance
 
 E_K_MAX = 20
 P_K_MAX = 120
 
 # %% Load ELT1 dataset
+
 
 def normalize_image(img, out_shape):
     thr, mask = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -36,12 +38,15 @@ def normalize_image(img, out_shape):
     in_shape = img[xl:xr, yl:yr].shape
 
     resized_img = cv2.resize(img[xl:xr, yl:yr], out_shape)
-    factors = (np.asarray(in_shape, dtype=float) / np.asarray(out_shape, dtype=float))
+    factors = (np.asarray(in_shape, dtype=float) /
+               np.asarray(out_shape, dtype=float))
     sigma = np.maximum(1e-6, (factors - 1) / 2)
-    blured_img = cv2.GaussianBlur(resized_img, (0, 0), sigma[0], sigmaY=sigma[1])
+    blured_img = cv2.GaussianBlur(
+        resized_img, (0, 0), sigma[0], sigmaY=sigma[1])
     blured_img -= blured_img.min()
     out_img = (blured_img * 255.0 / blured_img.max()).astype(np.uint8)
     return out_img
+
 
 def convert_etl_file(filename, out_path):
     with open(filename, 'rb') as f:
@@ -66,11 +71,13 @@ def convert_etl_file(filename, out_path):
 
 # %% Load ELT1 dataset
 
+
 def load_img(filename):
     scale = 1.0 / 256.0
     image = np.array(Image.open(filename), dtype=np.float32) * scale
     y = int(os.path.splitext(os.path.basename(filename))[0][-1])
     return image.reshape(1, 16 * 16), y
+
 
 def load_etl1_dataset(path):
     filenames = glob.glob(os.path.join(path, '*[0-9].png'))
@@ -78,10 +85,12 @@ def load_etl1_dataset(path):
     x, y = load_images(filenames)
     return np.concatenate(x), y.astype(np.uint8)
 
+
 dataset = load_etl1_dataset('./out/ETL1')
 idxes = np.random.choice(len(dataset[0]), 1300, replace=False)
 e_x, e_y = dataset[0][idxes], dataset[1][idxes]
-e_x_tr, e_x_te, e_y_tr, e_y_te = train_test_split(e_x, e_y, train_size=650, test_size=650)
+e_x_tr, e_x_te, e_y_tr, e_y_te = train_test_split(
+    e_x, e_y, train_size=650, test_size=650)
 
 # %% Load Pima dataset
 
@@ -91,7 +100,8 @@ p_df = p_df_tr.append(p_df_te, ignore_index=True)
 
 scaler = StandardScaler()
 scaler.fit(p_df_tr[['npreg', 'glu', 'bp', 'skin', 'bmi', 'ped', 'age']])
-p_x = scaler.transform(p_df[['npreg', 'glu', 'bp', 'skin', 'bmi', 'ped', 'age']])
+p_x = scaler.transform(
+    p_df[['npreg', 'glu', 'bp', 'skin', 'bmi', 'ped', 'age']])
 p_y = np.array([1 if t == 'Yes' else 0 for t in p_df['type']])
 
 p_x_tr = p_x[0:len(p_df_tr)]
@@ -99,7 +109,8 @@ p_y_tr = p_y[0:len(p_df_tr):]
 p_x_te = p_x[len(p_df_tr):]
 p_y_te = p_y[len(p_df_tr):]
 
-## %% Prepare KNN classifier
+# %% Prepare KNN classifier
+
 
 def knn_holdout(x_tr, y_tr, x_te, y_te, max_k):
     score = np.zeros(max_k)
@@ -109,6 +120,7 @@ def knn_holdout(x_tr, y_tr, x_te, y_te, max_k):
         knn.fit(x_tr, y_tr)
         score[i] = knn.score(x_te, y_te)
     return score
+
 
 def knn_loo(x, y, max_k):
     score = np.zeros(max_k)
@@ -122,27 +134,34 @@ def knn_loo(x, y, max_k):
 
 # %% Classification
 
+
 pima_holdout_scores = knn_holdout(p_x_tr, p_y_tr, p_x_te, p_y_te, P_K_MAX)
 pima_loo_scores = knn_loo(p_x, p_y, P_K_MAX)
 etl1_holdout_scores = knn_holdout(e_x_tr, e_y_tr, e_x_te, e_y_te, E_K_MAX)
 etl1_loo_scores = knn_loo(e_x, e_y, E_K_MAX)
 
-# %% Plot Pima indian
+# %% Plot PETL1
 
-plt.scatter(range(1, E_K_MAX + 1), 1 - etl1_holdout_scores, marker='x', label='Hold-Out')
-plt.scatter(range(1, E_K_MAX + 1), 1 - etl1_loo_scores, marker='o', label='Leave-One-Out')
+plt.scatter(range(1, E_K_MAX + 1), 1 - etl1_holdout_scores,
+            marker='x', label='Hold-Out')
+plt.scatter(range(1, E_K_MAX + 1), 1 - etl1_loo_scores,
+            marker='o', label='Leave-One-Out')
 plt.xlabel('k')
 plt.ylabel('error')
 plt.title('ETL1 dataset')
 plt.legend()
 plt.show()
+plt.savefig('./chap05/5_2_knn_etl1.eps')
 
 # %% Plot Pima indian
 
-plt.scatter(range(1, P_K_MAX + 1), 1 - pima_holdout_scores, marker='x', label='Hold-Out')
-plt.scatter(range(1, P_K_MAX + 1), 1 - pima_loo_scores, marker='o', label='Leave-One-Out')
+plt.scatter(range(1, P_K_MAX + 1), 1 - pima_holdout_scores,
+            marker='x', label='Hold-Out')
+plt.scatter(range(1, P_K_MAX + 1), 1 - pima_loo_scores,
+            marker='o', label='Leave-One-Out')
 plt.xlabel('k')
 plt.ylabel('error')
 plt.title('Pima indian dataset')
 plt.legend()
 plt.show()
+plt.savefig('./chap05/5_2_knn_pima.eps')
