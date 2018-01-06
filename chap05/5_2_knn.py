@@ -73,8 +73,9 @@ def convert_etl_file(filename, out_path):
 
 
 def load_img(filename):
-    scale = 1.0 / 256.0
-    image = np.array(Image.open(filename), dtype=np.float32) * scale
+    image = np.array(Image.open(filename), dtype=np.float32)
+    scale = 1.0 / (image.max() or 1)
+    image = image * scale
     y = int(os.path.splitext(os.path.basename(filename))[0][-1])
     return image.reshape(1, 16 * 16), y
 
